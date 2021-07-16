@@ -2,7 +2,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   Left = 202
   Top = 116
   Width = 1039
-  Height = 635
+  Height = 532
   Caption = 'Przyjmowanie pozycji do magazynu'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -16,9 +16,9 @@ object FormAddToWarehouse: TFormAddToWarehouse
   TextHeight = 13
   object btnConnect: TButton
     Left = 8
-    Top = 144
+    Top = 168
     Width = 233
-    Height = 25
+    Height = 33
     Caption = 'Wyszukaj'
     TabOrder = 0
     OnClick = btnConnectClick
@@ -34,16 +34,16 @@ object FormAddToWarehouse: TFormAddToWarehouse
         Caption = '#'
       end
       item
-        Caption = 'Nazwa dostawcy'
+        Caption = 'Indeks'
+        Width = 130
+      end
+      item
+        Caption = 'Nazwa kr'#243'tka'
         Width = 200
       end
       item
-        Caption = 'NIP dostawcy'
-        Width = 100
-      end
-      item
-        Caption = 'Kod EAN'
-        Width = 100
+        Caption = 'Nazwa pelna'
+        Width = 400
       end
       item
         Caption = 'Ilosc'
@@ -67,9 +67,9 @@ object FormAddToWarehouse: TFormAddToWarehouse
   end
   object btnConfirmDelivery: TButton
     Left = 8
-    Top = 472
+    Top = 464
     Width = 233
-    Height = 25
+    Height = 33
     Caption = 'Przyjmij'
     Enabled = False
     TabOrder = 2
@@ -78,7 +78,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     Left = 8
     Top = 16
     Width = 233
-    Height = 121
+    Height = 145
     Caption = 'Wyszukiwanie: '
     TabOrder = 3
     object Label1: TLabel
@@ -96,55 +96,65 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Caption = 'Nazwa kr'#243'tka'
     end
     object Label3: TLabel
-      Left = 11
+      Left = 8
       Top = 72
       Width = 62
       Height = 13
       Caption = 'Nazwa pelna'
     end
     object Label4: TLabel
-      Left = 11
+      Left = 8
       Top = 96
       Width = 94
       Height = 13
       Caption = 'Nr zapotrzebowania'
     end
-    object Edit1: TEdit
+    object Label11: TLabel
+      Left = 8
+      Top = 120
+      Width = 30
+      Height = 13
+      Caption = 'Status'
+    end
+    object InputIndex: TEdit
       Left = 120
       Top = 16
       Width = 105
       Height = 21
       TabOrder = 0
-      Text = '%'
     end
-    object Edit2: TEdit
+    object InputShortName: TEdit
       Left = 120
       Top = 40
       Width = 105
       Height = 21
       TabOrder = 1
-      Text = '%'
     end
-    object Edit3: TEdit
+    object InputFullName: TEdit
       Left = 120
       Top = 64
       Width = 105
       Height = 21
       TabOrder = 2
-      Text = '%'
     end
-    object Edit4: TEdit
+    object InputOrderNumber: TEdit
       Left = 120
       Top = 88
       Width = 105
       Height = 21
       TabOrder = 3
-      Text = '%'
+    end
+    object InputStatus: TEdit
+      Left = 120
+      Top = 112
+      Width = 105
+      Height = 21
+      TabOrder = 4
     end
   end
   object GroupBox2: TGroupBox
     Left = 8
-    Top = 296
+    Top = 288
     Width = 233
     Height = 169
     Caption = 'Przymij do magazynu: '
@@ -197,7 +207,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 0
-      Text = '%'
     end
     object Edit6: TEdit
       Left = 120
@@ -205,7 +214,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 1
-      Text = '%'
     end
     object Edit7: TEdit
       Left = 120
@@ -213,7 +221,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 2
-      Text = '%'
     end
     object Edit8: TEdit
       Left = 120
@@ -221,7 +228,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 3
-      Text = '%'
     end
     object Edit9: TEdit
       Left = 120
@@ -229,7 +235,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 4
-      Text = '%'
     end
     object Edit10: TEdit
       Left = 120
@@ -237,14 +242,13 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Width = 105
       Height = 21
       TabOrder = 5
-      Text = '%'
     end
   end
   object MySQL: TSQLConnection
     ConnectionName = 'MySQLConnection'
     DriverName = 'MySQL'
     GetDriverFunc = 'getSQLDriverMYSQL'
-    LibraryName = 'dbexpmysql.dll'
+    LibraryName = 'libmySQL.dll'
     LoadParamsOnConnect = True
     Params.Strings = (
       'DriverName=MySQL'
@@ -255,7 +259,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       'LocaleCode=0000'
       'username=root'
       'password=')
-    VendorLib = 'libmysql.dll'
+    VendorLib = 'libmySQL.dll'
     AfterConnect = MySQLAfterConnect
     AfterDisconnect = MySQLAfterDisconnect
     Left = 256
