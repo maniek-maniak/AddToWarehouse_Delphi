@@ -52,10 +52,6 @@ object FormAddToWarehouse: TFormAddToWarehouse
         Caption = 'Jed.'
       end
       item
-        Caption = 'Produkt'
-        Width = 200
-      end
-      item
         Caption = 'Status'
         Width = 150
       end>
