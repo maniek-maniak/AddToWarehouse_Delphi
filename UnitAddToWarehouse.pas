@@ -4,13 +4,11 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls;
+  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls, ExtCtrls;
 
 type
   TFormAddToWarehouse = class(TForm)
-    btnConnect: TButton;
     ListView: TListView;
-    btnConfirmDelivery: TButton;
     MySQL: TSQLConnection;
     SQL: TSQLDataSet;
     GroupBox1: TGroupBox;
@@ -30,21 +28,37 @@ type
     Edit5: TEdit;
     Edit6: TEdit;
     Edit7: TEdit;
-    Edit8: TEdit;
+    OutputQuantity: TEdit;
     Label9: TLabel;
     Edit9: TEdit;
     Label10: TLabel;
     Edit10: TEdit;
     InputStatus: TEdit;
     Label11: TLabel;
+    DB_status: TStatusBar;
+    TReadDB: TTimer;
+    Label12: TLabel;
+    Edit1: TEdit;
+    Label13: TLabel;
+    Edit2: TEdit;
+    btnConnect: TButton;
+    btnConfirmDelivery: TButton;
+    Label14: TLabel;
+    Edit3: TEdit;
+    Label15: TLabel;
+    Edit4: TEdit;
     procedure btnConnectClick(Sender: TObject);
     procedure MySQLAfterConnect(Sender: TObject);
     procedure MySQLAfterDisconnect(Sender: TObject);
     procedure FormClose(Sender: TObject; var Action: TCloseAction);
+    procedure TReadDBTimer(Sender: TObject);
+    procedure ListViewDblClick(Sender: TObject);
+    procedure InputOrderNumberKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
     Connected : Boolean;
-    procedure LoadTables;
+    procedure ReadDB;
+//    procedure LoadTables;
     procedure Show;
   public
     { Public declarations }
@@ -96,13 +110,15 @@ procedure TFormAddToWarehouse.MySQLAfterConnect(Sender: TObject);
 begin
   btnConnect.Caption := 'Wyszukiwanie';
    btnConnect.Enabled := False;
-    LoadTables;
+    DB_status.Panels[0].Text:= 'DB conected';
+     FormAddToWarehouse.ReadDB;
 end;
 
 procedure TFormAddToWarehouse.MySQLAfterDisconnect(Sender: TObject);
 begin
   btnConnect.Caption := 'Wyszukaj';
    btnConnect.Enabled := True;
+    DB_status.Panels[0].Text:= 'DB disconected';
 end;
 
 procedure TFormAddToWarehouse.FormClose(Sender: TObject; var Action: TCloseAction);
@@ -110,7 +126,49 @@ begin
   MySQL.Connected := False; // podczas zamkniêcia programu - roz³¹czenie z serwerem
 end;
 
-procedure TFormAddToWarehouse.LoadTables;
+
+
+
+
+{*****************        Wyswietlanie pobranych wynikow       ****************}
+procedure TFormAddToWarehouse.Show;
+var
+  i, j : Integer;
+  ListItem : TListItem;
+begin
+  ListView.Items.Clear;
+  for i:= 0 to RozmiarPozycjeZapotrzebowaniaMaterialowego do
+  begin
+  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[i];
+    for j:= 0 to RozmiarIndeksy do
+    begin
+      Indeks:= Indeksy[j];
+      if (PozycjaZapotrzebowaniaMaterialowego.NrIndeksu = Indeks.Numer) then
+        begin
+          ListItem := ListView.Items.Add;
+          //ListItem.Caption := IntToStr(i);
+          ListItem.Caption:= (IntToStr(PozycjaZapotrzebowaniaMaterialowego.Nr));
+          ListItem.SubItems.Add(Indeks.Indeks);
+          ListItem.SubItems.Add(Indeks.NazwaKrotka);
+          ListItem.SubItems.Add(Indeks.NazwaPelna);
+          ListItem.SubItems.Add(IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc));
+          ListItem.SubItems.Add(Indeks.Jednostka);
+          ListItem.SubItems.Add(PozycjaZapotrzebowaniaMaterialowego.Status);
+        end;
+
+    end;
+  end;
+
+end;
+
+procedure TFormAddToWarehouse.TReadDBTimer(Sender: TObject);
+begin
+  FormAddToWarehouse.TReadDB.Enabled:= false;
+   FormAddToWarehouse.Show;
+end;
+
+
+procedure TFormAddToWarehouse.ReadDB;
 var
   i, j : Integer;
   InIndeks: String;
@@ -152,7 +210,7 @@ begin
   SQL.Open; // odczytaj dane
   RozmiarIndeksy:= SQL.RecordCount;
   setLength(Indeksy, RozmiarIndeksy);
-  ShowMessage( IntToStr(RozmiarIndeksy));
+  DB_status.Panels[3].Text:= 'Pobrano '+IntToStr(RozmiarIndeksy)+' indeksów.';
 
   for i := 0 to SQL.RecordCount-1 do
   begin
@@ -184,13 +242,13 @@ begin
   SQL.Open; // odczytaj dane
   RozmiarPozycjeZapotrzebowaniaMaterialowego:= SQL.RecordCount;
   setLength(PozycjeZapotrzebowaniaMaterialowego, RozmiarPozycjeZapotrzebowaniaMaterialowego);
-  ShowMessage( IntToStr(RozmiarPozycjeZapotrzebowaniaMaterialowego));
+  DB_status.Panels[4].Text:= 'Pobrano ' + IntToStr(RozmiarPozycjeZapotrzebowaniaMaterialowego) + ' pozycji zapotrzebowañ zakupu.';
 
   for j := 0 to SQL.RecordCount-1 do
   begin
   { dodaj kolejne wartoœci }
    PozycjaZapotrzebowaniaMaterialowego.Nr:= SQL.FieldValues['nr'];
-    //PozycjaZapotrzebowaniaMaterialowego.Nr:= SQL.FieldValues['nr_indeksu'];
+    PozycjaZapotrzebowaniaMaterialowego.NrIndeksu:= SQL.FieldValues['nr_indeksu'];
      PozycjaZapotrzebowaniaMaterialowego.Ilosc:= SQL.FieldValues['ilosc'];
       PozycjaZapotrzebowaniaMaterialowego.IloscDostarczona:= SQL.FieldValues['ilosc_dostarczona'];
        PozycjaZapotrzebowaniaMaterialowego.Status:= UTF8ToAnsi(SQL.FieldValues['status']);
@@ -202,40 +260,27 @@ begin
   SQL.Close;
   MySQL.Connected := False;
 
-  Show;
+  FormAddToWarehouse.TReadDB.Enabled:= true;
 end;
 
-
-
-{*****************        Wyswietlanie pobranych wynikow       ****************}
-procedure TFormAddToWarehouse.Show;
-var
-  i, j : Integer;
-  ListItem : TListItem;
+procedure TFormAddToWarehouse.ListViewDblClick(Sender: TObject);
 begin
-  ListView.Items.Clear;
-  for i:= 0 to RozmiarPozycjeZapotrzebowaniaMaterialowego do
+ PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[StrToInt(ListView.Selected.Caption)];
+  OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
+end;
+
+procedure TFormAddToWarehouse.InputOrderNumberKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', DecimalSeparator]) then
   begin
-  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[i];
-    for j:= 0 to RozmiarIndeksy do
-    begin
-      Indeks:= Indeksy[j];
-      if (PozycjaZapotrzebowaniaMaterialowego.Nr = Indeks.Numer) then
-        begin
-          ListItem := ListView.Items.Add;
-          //ListItem.Caption := IntToStr(i);
-          ListItem.Caption:= (IntToStr(PozycjaZapotrzebowaniaMaterialowego.Nr));
-          ListItem.SubItems.Add(Indeks.Indeks);
-          ListItem.SubItems.Add(Indeks.NazwaKrotka);
-          ListItem.SubItems.Add(Indeks.NazwaPelna);
-          ListItem.SubItems.Add(IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc));
-          ListItem.SubItems.Add(Indeks.Jednostka);
-          ListItem.SubItems.Add(PozycjaZapotrzebowaniaMaterialowego.Status);
-        end;
-
-    end;
+     Key := #0;
+  end 
+  else 
+  if (Key = DecimalSeparator) and (Pos(Key, InputOrderNumber.Text) > 0) then
+  begin
+    Key := #0;
   end;
-
 end;
 
 end.
