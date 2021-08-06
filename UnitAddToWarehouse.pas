@@ -25,7 +25,7 @@ type
     Label6: TLabel;
     Label7: TLabel;
     Label8: TLabel;
-    Edit5: TEdit;
+    OutputWarehouse: TEdit;
     Edit6: TEdit;
     Edit7: TEdit;
     OutputQuantity: TEdit;
@@ -38,15 +38,15 @@ type
     DB_status: TStatusBar;
     TReadDB: TTimer;
     Label12: TLabel;
-    Edit1: TEdit;
+    OutputShortName: TEdit;
     Label13: TLabel;
-    Edit2: TEdit;
+    OutputFullName: TEdit;
     btnConnect: TButton;
     btnConfirmDelivery: TButton;
     Label14: TLabel;
-    Edit3: TEdit;
+    OutputIndex: TEdit;
     Label15: TLabel;
-    Edit4: TEdit;
+    OutputUnit: TEdit;
     procedure btnConnectClick(Sender: TObject);
     procedure MySQLAfterConnect(Sender: TObject);
     procedure MySQLAfterDisconnect(Sender: TObject);
@@ -78,9 +78,13 @@ type
    Nr: Integer;
     NrZapotrzebowaniaMaterialowego: Integer;
      NrIndeksu: Integer;
-      Ilosc: Integer;
-       IloscDostarczona: Integer;
-        Status: String[20];
+      Indeks: String[18];
+       NazwaKrotka: String[191];
+        NazwaPelna: String[191];
+         Jednostka: String[5];
+          Ilosc: Integer;
+           IloscDostarczona: Integer;
+            Status: String[20];
     end;
 
 var
@@ -129,38 +133,6 @@ end;
 
 
 
-
-{*****************        Wyswietlanie pobranych wynikow       ****************}
-procedure TFormAddToWarehouse.Show;
-var
-  i, j : Integer;
-  ListItem : TListItem;
-begin
-  ListView.Items.Clear;
-  for i:= 0 to RozmiarPozycjeZapotrzebowaniaMaterialowego do
-  begin
-  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[i];
-    for j:= 0 to RozmiarIndeksy do
-    begin
-      Indeks:= Indeksy[j];
-      if (PozycjaZapotrzebowaniaMaterialowego.NrIndeksu = Indeks.Numer) then
-        begin
-          ListItem := ListView.Items.Add;
-          //ListItem.Caption := IntToStr(i);
-          ListItem.Caption:= (IntToStr(PozycjaZapotrzebowaniaMaterialowego.Nr));
-          ListItem.SubItems.Add(Indeks.Indeks);
-          ListItem.SubItems.Add(Indeks.NazwaKrotka);
-          ListItem.SubItems.Add(Indeks.NazwaPelna);
-          ListItem.SubItems.Add(IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc));
-          ListItem.SubItems.Add(Indeks.Jednostka);
-          ListItem.SubItems.Add(PozycjaZapotrzebowaniaMaterialowego.Status);
-        end;
-
-    end;
-  end;
-
-end;
-
 procedure TFormAddToWarehouse.TReadDBTimer(Sender: TObject);
 begin
   FormAddToWarehouse.TReadDB.Enabled:= false;
@@ -168,9 +140,11 @@ begin
 end;
 
 
+
+
 procedure TFormAddToWarehouse.ReadDB;
 var
-  i, j : Integer;
+  i, j: Integer;
   InIndeks: String;
   InShortName: String;
   InFullName: String;
@@ -212,17 +186,20 @@ begin
   setLength(Indeksy, RozmiarIndeksy);
   DB_status.Panels[3].Text:= 'Pobrano '+IntToStr(RozmiarIndeksy)+' indeksów.';
 
-  for i := 0 to SQL.RecordCount-1 do
+  for i := 1 to SQL.RecordCount-1 do
   begin
-    Indeks.Numer:= SQL.FieldValues['nr'];
-     Indeks.Indeks:= UTF8ToAnsi(SQL.FieldValues['indeks']);
-      Indeks.NazwaKrotka:= UTF8ToAnsi(SQL.FieldValues['nazwa_krotka']);
-      Indeks.NazwaKrotka:= UTF8ToAnsi(SQL.FieldValues['nazwa_krotka']);
-       Indeks.NazwaPelna:= UTF8ToAnsi(SQL.FieldValues['nazwa_pelna']);
-        Indeks.Jednostka:= UTF8ToAnsi(SQL.FieldValues['jednostka']);
-  { dodaj kolejne wartoœci }
-    Indeksy[i]:= Indeks;
-    SQL.Next;
+       Indeks.Numer:= SQL.FieldValues['nr'];
+        Indeks.Indeks:= SQL.FieldValues['indeks'];
+         if (Indeks.Indeks <> '') then Indeks.Indeks:= Indeks.Indeks);
+         Indeks.NazwaKrotka:= SQL.FieldValues['nazwa_krotka'];
+          if (Indeks.NazwaKrotka <> '') then Indeks.NazwaKrotka:= UTF8ToAnsi(Indeks.NazwaKrotka);
+          Indeks.NazwaPelna:= SQL.FieldValues['nazwa_pelna'];
+           if (Indeks.NazwaPelna <> '') then Indeks.NazwaPelna:= UTF8ToAnsi(Indeks.NazwaPelna);
+            Indeks.Jednostka:= SQL.FieldValues['jednostka'];
+            if (Indeks.Jednostka <> '') then Indeks.Jednostka:= UTF8ToAnsi(Indeks.Jednostka);
+            { dodaj kolejne wartoœci }
+            Indeksy[i]:= Indeks;
+            SQL.Next;
   end;
 
   SQL.Close;
@@ -244,7 +221,7 @@ begin
   setLength(PozycjeZapotrzebowaniaMaterialowego, RozmiarPozycjeZapotrzebowaniaMaterialowego);
   DB_status.Panels[4].Text:= 'Pobrano ' + IntToStr(RozmiarPozycjeZapotrzebowaniaMaterialowego) + ' pozycji zapotrzebowañ zakupu.';
 
-  for j := 0 to SQL.RecordCount-1 do
+  for j := 1 to SQL.RecordCount-1 do
   begin
   { dodaj kolejne wartoœci }
    PozycjaZapotrzebowaniaMaterialowego.Nr:= SQL.FieldValues['nr'];
@@ -263,10 +240,54 @@ begin
   FormAddToWarehouse.TReadDB.Enabled:= true;
 end;
 
+
+{*****************        Wyswietlanie pobranych wynikow       ****************}
+procedure TFormAddToWarehouse.Show;
+var
+  i, j : Integer;
+  ListItem : TListItem;
+begin
+  ListView.Items.Clear;
+  for i:= 1 to RozmiarPozycjeZapotrzebowaniaMaterialowego do
+  begin
+   //PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[i];
+    for j:= 1 to RozmiarIndeksy do
+    begin
+      Indeks:= Indeksy[j];
+      if (PozycjeZapotrzebowaniaMaterialowego[i].NrIndeksu = Indeks.Numer) then
+        begin
+          PozycjeZapotrzebowaniaMaterialowego[i].Indeks:= Indeks.Indeks;
+          PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka:= Indeks.NazwaKrotka;
+          PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna:= Indeks.NazwaPelna;
+          PozycjeZapotrzebowaniaMaterialowego[i].Jednostka:= Indeks.Jednostka;
+
+          ListItem := ListView.Items.Add;
+          ListItem.Caption:= (IntToStr(PozycjeZapotrzebowaniaMaterialowego[i].Nr));
+          ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Indeks);
+          ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka);
+          ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna);
+          ListItem.SubItems.Add(IntToStr(PozycjeZapotrzebowaniaMaterialowego[i].Ilosc));
+          ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Jednostka);
+          ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Status);
+
+          //PozycjeZapotrzebowaniaMaterialowego[i] := PozycjaZapotrzebowaniaMaterialowego;
+        end;
+
+    end;
+
+  end;
+
+end;
+
+
 procedure TFormAddToWarehouse.ListViewDblClick(Sender: TObject);
 begin
  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[StrToInt(ListView.Selected.Caption)];
-  OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
+  OutputIndex.Text:= PozycjaZapotrzebowaniaMaterialowego.Indeks;
+   OutputShortName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaKrotka;
+    OutputFullName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaPelna;
+     OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
+      OutputUnit.Text:= PozycjaZapotrzebowaniaMaterialowego.Jednostka;
 end;
 
 procedure TFormAddToWarehouse.InputOrderNumberKeyPress(Sender: TObject;
@@ -275,8 +296,8 @@ begin
   if not (Key in [#8, '0'..'9', DecimalSeparator]) then
   begin
      Key := #0;
-  end 
-  else 
+  end
+  else
   if (Key = DecimalSeparator) and (Pos(Key, InputOrderNumber.Text) > 0) then
   begin
     Key := #0;

@@ -2,7 +2,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   Left = 24
   Top = 108
   Width = 1245
-  Height = 578
+  Height = 566
   Caption = 'Przyjmowanie pozycji do magazynu'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -18,7 +18,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     Left = 360
     Top = 8
     Width = 873
-    Height = 521
+    Height = 505
     Color = clBtnFace
     Columns = <
       item
@@ -55,7 +55,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   end
   object GroupBox1: TGroupBox
     Left = 8
-    Top = 24
+    Top = 8
     Width = 345
     Height = 193
     Caption = 'Wyszukiwanie: '
@@ -143,7 +143,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   end
   object GroupBox2: TGroupBox
     Left = 8
-    Top = 224
+    Top = 208
     Width = 345
     Height = 305
     Caption = 'Przymij do magazynu: '
@@ -218,7 +218,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Height = 13
       Caption = 'Jedn.'
     end
-    object Edit5: TEdit
+    object OutputWarehouse: TEdit
       Left = 8
       Top = 176
       Width = 201
@@ -262,7 +262,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Height = 21
       TabOrder = 5
     end
-    object Edit1: TEdit
+    object OutputShortName: TEdit
       Left = 8
       Top = 72
       Width = 329
@@ -271,7 +271,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       ReadOnly = True
       TabOrder = 6
     end
-    object Edit2: TEdit
+    object OutputFullName: TEdit
       Left = 8
       Top = 120
       Width = 329
@@ -289,16 +289,15 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Enabled = False
       TabOrder = 8
     end
-    object Edit3: TEdit
+    object OutputIndex: TEdit
       Left = 8
       Top = 32
       Width = 177
       Height = 21
       Color = cl3DLight
-      ReadOnly = True
       TabOrder = 9
     end
-    object Edit4: TEdit
+    object OutputUnit: TEdit
       Left = 64
       Top = 232
       Width = 49
@@ -310,7 +309,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   end
   object DB_status: TStatusBar
     Left = 0
-    Top = 532
+    Top = 520
     Width = 1237
     Height = 19
     Panels = <
