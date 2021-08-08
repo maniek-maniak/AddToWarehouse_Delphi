@@ -29,10 +29,11 @@ type
     Edit6: TEdit;
     Edit7: TEdit;
     OutputQuantity: TEdit;
+    OutputValue: TEdit;
+    OutputDeliveryNote: TEdit;
+    OutputUnitValue: TEdit;
     Label9: TLabel;
-    Edit9: TEdit;
     Label10: TLabel;
-    Edit10: TEdit;
     InputStatus: TEdit;
     Label11: TLabel;
     DB_status: TStatusBar;
@@ -47,6 +48,11 @@ type
     OutputIndex: TEdit;
     Label15: TLabel;
     OutputUnit: TEdit;
+    RadioGroup1: TRadioGroup;
+    ButtonPrint: TButton;
+    RadioButtonNoPrint: TRadioButton;
+    RadioButtonOnePrint: TRadioButton;
+    RadioButtonAllPrint: TRadioButton;
     procedure btnConnectClick(Sender: TObject);
     procedure MySQLAfterConnect(Sender: TObject);
     procedure MySQLAfterDisconnect(Sender: TObject);
@@ -54,12 +60,18 @@ type
     procedure TReadDBTimer(Sender: TObject);
     procedure ListViewDblClick(Sender: TObject);
     procedure InputOrderNumberKeyPress(Sender: TObject; var Key: Char);
+    procedure OutputValueKeyPress(Sender: TObject; var Key: Char);
+    procedure OutputValueKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure OutputDeliveryNoteKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
   private
     { Private declarations }
     Connected : Boolean;
     procedure ReadDB;
 //    procedure LoadTables;
     procedure Show;
+    procedure CheckOutputData;
   public
     { Public declarations }
   end;
@@ -96,6 +108,8 @@ Indeksy: array of TIndeks;     //  MATRIX
 PozycjeZapotrzebowaniaMaterialowego: array of TPozycjaZapotrzebowaniaMaterialowego;     //  MATRIX
  RozmiarPozycjeZapotrzebowaniaMaterialowego: Integer;
   PozycjaZapotrzebowaniaMaterialowego: TPozycjaZapotrzebowaniaMaterialowego;
+
+Quantity, UnitValue, Value: Currency;
 
 var
   FormAddToWarehouse: TFormAddToWarehouse;
@@ -189,13 +203,17 @@ begin
   for i := 1 to SQL.RecordCount-1 do
   begin
        Indeks.Numer:= SQL.FieldValues['nr'];
-        Indeks.Indeks:= UTF8ToAnsi(SQL.FieldValues['indeks']);
-         Indeks.NazwaKrotka:= UTF8ToAnsi(SQL.FieldValues['nazwa_krotka']);
-          Indeks.NazwaPelna:= UTF8ToAnsi(SQL.FieldValues['nazwa_pelna']);
-           Indeks.Jednostka:= UTF8ToAnsi(SQL.FieldValues['jednostka']);
-           { dodaj kolejne wartoœci }
-           Indeksy[i]:= Indeks;
-           SQL.Next;
+        Indeks.Indeks:= SQL.FieldValues['indeks'];
+         //if (Indeks.Indeks <> '') then Indeks.Indeks:= UTF8ToAnsi(Indeks.Indeks);
+         Indeks.NazwaKrotka:= SQL.FieldValues['nazwa_krotka'];
+          if (Indeks.NazwaKrotka <> '') then Indeks.NazwaKrotka:= UTF8ToAnsi(Indeks.NazwaKrotka);
+          Indeks.NazwaPelna:= SQL.FieldValues['nazwa_pelna'];
+           if (Indeks.NazwaPelna <> '') then Indeks.NazwaPelna:= UTF8ToAnsi(Indeks.NazwaPelna);
+            Indeks.Jednostka:= SQL.FieldValues['jednostka'];
+            //if (Indeks.Jednostka <> '') then Indeks.Jednostka:= UTF8ToAnsi(Indeks.Jednostka);
+            { dodaj kolejne wartoœci }
+            Indeksy[i]:= Indeks;
+            SQL.Next;
   end;
 
   SQL.Close;
@@ -254,11 +272,11 @@ begin
         begin
           PozycjeZapotrzebowaniaMaterialowego[i].Indeks:= Indeks.Indeks;
           PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka:= Indeks.NazwaKrotka;
-          //PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna:= Indeks.NazwaPelna;
+          PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna:= Indeks.NazwaPelna;
           PozycjeZapotrzebowaniaMaterialowego[i].Jednostka:= Indeks.Jednostka;
 
           ListItem := ListView.Items.Add;
-          ListItem.Caption:= (IntToStr(PozycjeZapotrzebowaniaMaterialowego[i].Nr));
+          ListItem.Caption:= (IntToStr(i));
           ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Indeks);
           ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka);
           ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna);
@@ -282,8 +300,10 @@ begin
   OutputIndex.Text:= PozycjaZapotrzebowaniaMaterialowego.Indeks;
    OutputShortName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaKrotka;
     OutputFullName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaPelna;
-     //OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
-      //OutputUnit.Text:= PozycjaZapotrzebowaniaMaterialowego.Jednostka;
+     OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
+      OutputUnit.Text:= PozycjaZapotrzebowaniaMaterialowego.Jednostka;
+       OutputValue.Text:= '';
+        CheckOutputData;
 end;
 
 procedure TFormAddToWarehouse.InputOrderNumberKeyPress(Sender: TObject;
@@ -298,6 +318,65 @@ begin
   begin
     Key := #0;
   end;
+end;
+
+
+procedure TFormAddToWarehouse.CheckOutputData;
+begin
+  if ((FormAddToWarehouse.OutputIndex.Text <> '')
+  and (FormAddToWarehouse.OutputShortName.Text <> '')
+  and (FormAddToWarehouse.OutputFullName.Text <> '')
+  and (FormAddToWarehouse.OutputDeliveryNote.Text <> ''))
+    then
+     begin
+       FormAddToWarehouse.btnConfirmDelivery.Enabled:= true;
+     end else
+     begin
+       FormAddToWarehouse.btnConfirmDelivery.Enabled:= false;
+    end;
+end;
+
+procedure TFormAddToWarehouse.OutputValueKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', DecimalSeparator]) then
+  begin
+     Key := #0;
+  end
+  else
+  if (Key = DecimalSeparator) and (Pos(Key, OutputValue.Text) > 0) then
+  begin
+    Key := #0;
+  end;
+end;
+
+procedure TFormAddToWarehouse.OutputValueKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  if (OutputQuantity.Text <> '') then
+   begin
+    try
+      Quantity:= StrToInt(OutputQuantity.Text);
+    except
+      Quantity:= 1;
+     end;
+   end;
+  if (OutputValue.Text <>'') then
+   begin
+   Value:= StrToCurr(OutputValue.Text);
+   if (Value > 0) then
+    begin
+     UnitValue:= Value / Quantity;
+     OutputUnitValue.Text:= CurrToStr(UnitValue);
+     CheckOutputData;
+    end;
+  end;
+end;
+
+procedure TFormAddToWarehouse.OutputDeliveryNoteKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  CheckOutputData;
 end;
 
 end.
