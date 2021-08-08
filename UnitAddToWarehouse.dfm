@@ -1,5 +1,5 @@
 object FormAddToWarehouse: TFormAddToWarehouse
-  Left = 9
+  Left = 29
   Top = 118
   BorderIcons = [biMinimize]
   BorderStyle = bsDialog
@@ -22,7 +22,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   PixelsPerInch = 96
   TextHeight = 13
   object ListView: TListView
-    Left = 360
+    Left = 368
     Top = 8
     Width = 873
     Height = 553
@@ -251,22 +251,25 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Height = 21
       Color = 12580802
       TabOrder = 0
+      OnKeyUp = OutputWarehouseKeyUp
     end
-    object Edit6: TEdit
+    object OutputShelfNumber: TEdit
       Left = 280
       Top = 176
       Width = 57
       Height = 21
       Color = 12580802
       TabOrder = 1
+      OnKeyUp = OutputShelfNumberKeyUp
     end
-    object Edit7: TEdit
+    object OutputRackNumber: TEdit
       Left = 216
       Top = 176
       Width = 57
       Height = 21
       Color = 12580802
       TabOrder = 2
+      OnKeyUp = OutputRackNumberKeyUp
     end
     object OutputQuantity: TEdit
       Left = 8
@@ -275,6 +278,8 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Height = 21
       Color = 12580802
       TabOrder = 3
+      OnKeyPress = OutputQuantityKeyPress
+      OnKeyUp = OutputQuantityKeyUp
     end
     object OutputUnitValue: TEdit
       Left = 120
@@ -327,6 +332,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Font.Style = []
       ParentFont = False
       TabOrder = 8
+      OnClick = btnConfirmDeliveryClick
     end
     object OutputIndex: TEdit
       Left = 8
@@ -421,5 +427,39 @@ object FormAddToWarehouse: TFormAddToWarehouse
         Text = 'Pobranych pozycji zapotrzebowa'#324' zakupu:'
         Width = 50
       end>
+  end
+  object MySQL: TSQLConnection
+    ConnectionName = 'MySQLConnection'
+    DriverName = 'MySQL'
+    GetDriverFunc = 'getSQLDriverMYSQL'
+    LibraryName = 'dbexpmysql.dll'
+    Params.Strings = (
+      'DriverName=MySQL'
+      'HostName=localhost'
+      'Database=magazyny'
+      'User_Name=root'
+      'Password='
+      'BlobSize=-1'
+      'ErrorResourceFile='
+      'LocaleCode=0000')
+    VendorLib = 'libmysql.dll'
+    AfterConnect = MySQLAfterConnect
+    AfterDisconnect = MySQLAfterDisconnect
+    Left = 408
+    Top = 32
+  end
+  object SQL: TSQLDataSet
+    MaxBlobSize = -1
+    Params = <>
+    SQLConnection = MySQL
+    Left = 440
+    Top = 32
+  end
+  object TReadDB: TTimer
+    Enabled = False
+    Interval = 1
+    OnTimer = TReadDBTimer
+    Left = 376
+    Top = 32
   end
 end

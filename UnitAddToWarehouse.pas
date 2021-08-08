@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls, ExtCtrls, DataBase;
+  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls, ExtCtrls;
 
 type
   TFormAddToWarehouse = class(TForm)
@@ -24,8 +24,8 @@ type
     Label7: TLabel;
     Label8: TLabel;
     OutputWarehouse: TEdit;
-    Edit6: TEdit;
-    Edit7: TEdit;
+    OutputShelfNumber: TEdit;
+    OutputRackNumber: TEdit;
     OutputQuantity: TEdit;
     OutputValue: TEdit;
     OutputDeliveryNote: TEdit;
@@ -50,6 +50,9 @@ type
     RadioButtonNoPrint: TRadioButton;
     RadioButtonOnePrint: TRadioButton;
     RadioButtonAllPrint: TRadioButton;
+    MySQL: TSQLConnection;
+    SQL: TSQLDataSet;
+    TReadDB: TTimer;
     procedure btnConnectClick(Sender: TObject);
     procedure MySQLAfterConnect(Sender: TObject);
     procedure MySQLAfterDisconnect(Sender: TObject);
@@ -62,12 +65,26 @@ type
       Shift: TShiftState);
     procedure OutputDeliveryNoteKeyUp(Sender: TObject; var Key: Word;
       Shift: TShiftState);
+    procedure OutputQuantityKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure OutputShelfNumberKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure OutputRackNumberKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure OutputWarehouseKeyUp(Sender: TObject; var Key: Word;
+      Shift: TShiftState);
+    procedure btnConfirmDeliveryClick(Sender: TObject);
+    procedure OutputQuantityKeyPress(Sender: TObject; var Key: Char);
   private
     { Private declarations }
     Connected : Boolean;
+    read_DB : Boolean;
+    write_DB : Boolean;
     procedure ReadDB;
+    procedure WriteDB;
 //    procedure LoadTables;
     procedure Show;
+    procedure ObliczCeneJedn;
     procedure CheckOutputData;
   public
     { Public declarations }
@@ -113,7 +130,11 @@ PozycjeZapotrzebowaniaMaterialowego: array of TPozycjaZapotrzebowaniaMaterialowe
   InNrZapotrzebowania: String;
   InStatus: String;
 
-Quantity, UnitValue, Value: Currency;
+  OutputNrLiniiZapotrzebowania: String;
+  OutputNumberIndex: String;
+  IloscDosatarczona: String;
+
+  Quantity, UnitValue, Value: Currency;
 
 var
   FormAddToWarehouse: TFormAddToWarehouse;
@@ -125,6 +146,7 @@ implementation
 procedure TFormAddToWarehouse.btnConnectClick(Sender: TObject);
 begin
   if Connected then Connected := False else Connected := True;
+  read_DB:= True;
   MySQL.Connected := True;
 end;
 
@@ -133,17 +155,25 @@ begin
   btnConnect.Caption := 'Wyszukiwanie';
    btnConnect.Enabled := False;
     DB_status.Panels[0].Text:= 'DB conected';
+  if (read_DB) then
+    begin
+  (*    InIndeks:= '%' + FormAddToWarehouse.InputIndex.Text + '%';
+      InShortName:= '%'+ FormAddToWarehouse.InputShortName.Text +'%';
+      InFullName:= FormAddToWarehouse.InputFullName.Text;
 
-  InIndeks:= '%' + FormAddToWarehouse.InputIndex.Text + '%';
-  InShortName:= '%'+ FormAddToWarehouse.InputShortName.Text +'%';
-  InFullName:= FormAddToWarehouse.InputFullName.Text;
+      InNrZapotrzebowania:= FormAddToWarehouse.InputOrderNumber.Text;
+      if InNrZapotrzebowania = '' then InNrZapotrzebowania:= '%';
 
-  InNrZapotrzebowania:= FormAddToWarehouse.InputOrderNumber.Text;
-  if InNrZapotrzebowania = '' then InNrZapotrzebowania:= '%';
+      InStatus:= '%' + FormAddToWarehouse.InputStatus.Text + '%';
+    *)
+       ReadDB;
+     end;
 
-  InStatus:= '%' + FormAddToWarehouse.InputStatus.Text + '%';
+   if (write_DB) then
+     begin
+       WriteDB;
+     end;
 
-  ReadDB;
 end;
 
 procedure TFormAddToWarehouse.MySQLAfterDisconnect(Sender: TObject);
@@ -167,7 +197,105 @@ begin
    FormAddToWarehouse.Show;
 end;
 
+procedure TFormAddToWarehouse.ReadDB;
+var
+  i, j: Integer;
+  InIndeks: String;
+  InShortName: String;
+  InFullName: String;
 
+  InNrZapotrzebowania: String;
+  InStatus: String;
+
+  SELECT, FROM, WHERE: String;
+begin
+
+  read_DB:= False;
+
+  InIndeks:= '%' + FormAddToWarehouse.InputIndex.Text + '%';
+  InShortName:= '%'+ FormAddToWarehouse.InputShortName.Text +'%';
+  InFullName:= FormAddToWarehouse.InputFullName.Text;
+
+  InNrZapotrzebowania:= FormAddToWarehouse.InputOrderNumber.Text;
+  if InNrZapotrzebowania = '' then InNrZapotrzebowania:= '%';
+
+  InStatus:= '%' + FormAddToWarehouse.InputStatus.Text + '%';
+
+  SELECT:= 'SELECT ';
+  SELECT:= SELECT + 'indeksy.nr, ';
+  SELECT:= SELECT + 'indeksy.indeks, ';
+  SELECT:= SELECT + 'indeksy.nazwa_krotka, ';
+  SELECT:= SELECT + 'indeksy.nazwa_pelna, ';
+  SELECT:= SELECT + 'indeksy.jednostka ';
+
+  FROM:= 'FROM indeksy ';
+
+  WHERE:= 'WHERE ';
+  WHERE:= WHERE + 'indeks LIKE "%s" ';
+  WHERE:= WHERE + 'AND nazwa_krotka LIKE "%s" ';
+  WHERE:= WHERE + 'AND nazwa_pelna LIKE "%s"';
+
+  SQL.CommandText := Format(SELECT + FROM + WHERE, [InIndeks, InShortName, InFullName]);
+
+  SQL.Open; // odczytaj dane
+  RozmiarIndeksy:= SQL.RecordCount;
+  setLength(Indeksy, RozmiarIndeksy);
+  DB_status.Panels[3].Text:= 'Pobrano '+IntToStr(RozmiarIndeksy)+' indeksów.';
+
+  for i := 1 to SQL.RecordCount-1 do
+  begin
+       Indeks.Numer:= SQL.FieldValues['nr'];
+        Indeks.Indeks:= SQL.FieldValues['indeks'];
+         if (Indeks.Indeks <> '') then Indeks.Indeks:= Indeks.Indeks;
+         Indeks.NazwaKrotka:= SQL.FieldValues['nazwa_krotka'];
+          if (Indeks.NazwaKrotka <> '') then Indeks.NazwaKrotka:= UTF8ToAnsi(Indeks.NazwaKrotka);
+          Indeks.NazwaPelna:= SQL.FieldValues['nazwa_pelna'];
+           if (Indeks.NazwaPelna <> '') then Indeks.NazwaPelna:= UTF8ToAnsi(Indeks.NazwaPelna);
+            Indeks.Jednostka:= SQL.FieldValues['jednostka'];
+            if (Indeks.Jednostka <> '') then Indeks.Jednostka:= UTF8ToAnsi(Indeks.Jednostka);
+            { dodaj kolejne wartooci }
+            Indeksy[i]:= Indeks;
+            SQL.Next;
+  end;
+
+  SQL.Close;
+
+  SELECT:= 'SELECT ';
+  SELECT:= SELECT + 'nr, ';
+  SELECT:= SELECT + 'nr_indeksu, ';
+  SELECT:= SELECT + 'ilosc, ';
+  SELECT:= SELECT + 'ilosc_dostarczona, ';
+  SELECT:= SELECT + 'status_pozycji_zapotrzebowania_materialowego ';
+
+  FROM:= 'FROM pozycje_zapotrzebowania_materialowego ';
+  WHERE:= 'WHERE nr_zapotrzebowania_materialowego LIKE "%s" ';
+  WHERE:= WHERE + 'AND status_pozycji_zapotrzebowania_materialowego LIKE "%s"';
+
+  SQL.CommandText := Format(SELECT + FROM + WHERE, [InNrZapotrzebowania, InStatus]);
+
+  SQL.Open; // odczytaj dane
+  RozmiarPozycjeZapotrzebowaniaMaterialowego:= SQL.RecordCount;
+  setLength(PozycjeZapotrzebowaniaMaterialowego, RozmiarPozycjeZapotrzebowaniaMaterialowego);
+  DB_status.Panels[4].Text:= 'Pobrano ' + IntToStr(RozmiarPozycjeZapotrzebowaniaMaterialowego) + ' pozycji zapotrzebowan zakupu.';
+
+  for j := 1 to SQL.RecordCount-1 do
+  begin
+  { dodaj kolejne wartooci }
+   PozycjaZapotrzebowaniaMaterialowego.Nr:= SQL.FieldValues['nr'];
+    PozycjaZapotrzebowaniaMaterialowego.NrIndeksu:= SQL.FieldValues['nr_indeksu'];
+     PozycjaZapotrzebowaniaMaterialowego.Ilosc:= SQL.FieldValues['ilosc'];
+      PozycjaZapotrzebowaniaMaterialowego.IloscDostarczona:= SQL.FieldValues['ilosc_dostarczona'];
+       //PozycjaZapotrzebowaniaMaterialowego.Status:= UTF8ToAnsi(SQL.FieldValues['status_pozycji_zapotrzebowania_materialowego']);
+
+    PozycjeZapotrzebowaniaMaterialowego[j]:= PozycjaZapotrzebowaniaMaterialowego;
+     SQL.Next;
+  end;
+
+  SQL.Close;
+  MySQL.Connected := False;
+
+  FormAddToWarehouse.TReadDB.Enabled:= true;
+end;
 
 
 
@@ -215,6 +343,9 @@ end;
 procedure TFormAddToWarehouse.ListViewDblClick(Sender: TObject);
 begin
  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[StrToInt(ListView.Selected.Caption)];
+// ShowMessage(IntToSTr(PozycjaZapotrzebowaniaMaterialowego.Nr));
+ OutputNrLiniiZapotrzebowania:= IntToSTr(PozycjaZapotrzebowaniaMaterialowego.Nr);
+ OutputNumberIndex:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.NrIndeksu);
   OutputIndex.Text:= PozycjaZapotrzebowaniaMaterialowego.Indeks;
    OutputShortName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaKrotka;
     OutputFullName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaPelna;
@@ -244,7 +375,12 @@ begin
   if ((FormAddToWarehouse.OutputIndex.Text <> '')
   and (FormAddToWarehouse.OutputShortName.Text <> '')
   and (FormAddToWarehouse.OutputFullName.Text <> '')
-  and (FormAddToWarehouse.OutputDeliveryNote.Text <> ''))
+  and (FormAddToWarehouse.OutputDeliveryNote.Text <> '')
+  and (FormAddToWarehouse.OutputWarehouse.Text <> '')
+  and (FormAddToWarehouse.OutputRackNumber.Text <> '')
+  and (FormAddToWarehouse.OutputShelfNumber.Text <> '')
+  and (FormAddToWarehouse.OutputQuantity.Text <> '')
+  and (FormAddToWarehouse.OutputValue.Text <> ''))
     then
      begin
        FormAddToWarehouse.btnConfirmDelivery.Enabled:= true;
@@ -268,8 +404,7 @@ begin
   end;
 end;
 
-procedure TFormAddToWarehouse.OutputValueKeyUp(Sender: TObject;
-  var Key: Word; Shift: TShiftState);
+procedure TFormAddToWarehouse.ObliczCeneJedn;
 begin
   if (OutputQuantity.Text <> '') then
    begin
@@ -286,15 +421,106 @@ begin
     begin
      UnitValue:= Value / Quantity;
      OutputUnitValue.Text:= CurrToStr(UnitValue);
-     CheckOutputData;
     end;
   end;
+end;
+
+procedure TFormAddToWarehouse.OutputValueKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  ObliczCeneJedn;
+  CheckOutputData;
 end;
 
 procedure TFormAddToWarehouse.OutputDeliveryNoteKeyUp(Sender: TObject;
   var Key: Word; Shift: TShiftState);
 begin
   CheckOutputData;
+end;
+
+procedure TFormAddToWarehouse.OutputQuantityKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  ObliczCeneJedn;
+  CheckOutputData;
+end;
+
+procedure TFormAddToWarehouse.OutputShelfNumberKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  CheckOutputData;
+end;
+
+procedure TFormAddToWarehouse.OutputRackNumberKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  CheckOutputData;
+end;
+
+procedure TFormAddToWarehouse.OutputWarehouseKeyUp(Sender: TObject;
+  var Key: Word; Shift: TShiftState);
+begin
+  CheckOutputData;
+end;
+
+procedure TFormAddToWarehouse.WriteDB;
+var
+  i, j: Integer;
+
+  IloscDosatarczona, DeliveryNote, Warehouse, UnitValue : String;
+
+  _UPDATE, _SET, _WHERE: String;
+  _INSERT_INTO, _VALUES: String;
+begin
+  write_DB:= False;
+  IloscDosatarczona:= FormAddToWarehouse.OutputQuantity.Text;
+  _UPDATE:= 'UPDATE `pozycje_zapotrzebowania_materialowego` ';
+  _SET:= 'SET `ilosc_dostarczona` =  %s, ';
+  _SET:= _SET + '`status_pozycji_zapotrzebowania_materialowego` = %s ';
+  _WHERE:= 'WHERE `pozycje_zapotrzebowania_materialowego`.`nr` = %s;';
+
+  SQL.CommandText := Format(_UPDATE + _SET + _WHERE, [IloscDosatarczona, '"Przyj"', OutputNrLiniiZapotrzebowania]);
+
+  SQL.ExecSQL;
+
+  DeliveryNote:= FormAddToWarehouse.OutputDeliveryNote.Text;
+  Warehouse:= FormAddToWarehouse.OutputWarehouse.Text;
+  UnitValue:= FormAddToWarehouse.OutputUnitValue.Text;
+  UnitValue:= StringReplace(UnitValue, ',', '.', []);
+
+  _INSERT_INTO:= 'INSERT INTO `magazyn_pz_rw` (`nr_pozycji_zapotrzebowania_materialowego`, `pz_wz`, `nr_roportu_o_usterce`, ';
+  _INSERT_INTO:= _INSERT_INTO + '`nr_pracownika_wydajacego`, `nr_pracownika_pobierajacego`, `nr_indeksu_materialowego`, `nr_magazynu`, `nr_regalu`, `nr_polki`, `ilosc`, `wartosc_jednostkowa`) ';
+  _VALUES:= 'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s");';
+
+  SQL.CommandText := Format(_INSERT_INTO + _VALUES, [OutputNrLiniiZapotrzebowania, DeliveryNote, Warehouse,'52','0', OutputNumberIndex,'IV','0','0', IloscDosatarczona, UnitValue]);
+
+  SQL.ExecSQL;
+
+  SQL.Close;
+  MySQL.Connected := False;
+
+end;
+
+procedure TFormAddToWarehouse.btnConfirmDeliveryClick(Sender: TObject);
+begin
+  if Connected then Connected := False else Connected := True;
+  write_DB:= True;
+  MySQL.Connected := True;
+  FormAddToWarehouse.btnConfirmDelivery.Enabled:= False;
+  end;
+
+procedure TFormAddToWarehouse.OutputQuantityKeyPress(Sender: TObject;
+  var Key: Char);
+begin
+  if not (Key in [#8, '0'..'9', DecimalSeparator]) then
+  begin
+     Key := #0;
+  end
+  else
+  if (Key = DecimalSeparator) and (Pos(Key, OutputQuantity.Text) > 0) then
+  begin
+    Key := #0;
+  end;
 end;
 
 end.
