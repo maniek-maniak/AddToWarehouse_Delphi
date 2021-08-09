@@ -320,7 +320,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     end
     object btnConfirmDelivery: TButton
       Left = 8
-      Top = 312
+      Top = 320
       Width = 329
       Height = 33
       Caption = 'Przyjmij'

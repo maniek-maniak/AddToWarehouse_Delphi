@@ -145,7 +145,8 @@ implementation
 
 procedure TFormAddToWarehouse.btnConnectClick(Sender: TObject);
 begin
-  if Connected then Connected := False else Connected := True;
+//  if Connected then Connected := False else Connected := True;
+  FormAddToWarehouse.btnConnect.Enabled:= False;
   read_DB:= True;
   MySQL.Connected := True;
 end;
@@ -155,25 +156,8 @@ begin
   btnConnect.Caption := 'Wyszukiwanie';
    btnConnect.Enabled := False;
     DB_status.Panels[0].Text:= 'DB conected';
-  if (read_DB) then
-    begin
-  (*    InIndeks:= '%' + FormAddToWarehouse.InputIndex.Text + '%';
-      InShortName:= '%'+ FormAddToWarehouse.InputShortName.Text +'%';
-      InFullName:= FormAddToWarehouse.InputFullName.Text;
-
-      InNrZapotrzebowania:= FormAddToWarehouse.InputOrderNumber.Text;
-      if InNrZapotrzebowania = '' then InNrZapotrzebowania:= '%';
-
-      InStatus:= '%' + FormAddToWarehouse.InputStatus.Text + '%';
-    *)
-       ReadDB;
-     end;
-
-   if (write_DB) then
-     begin
-       WriteDB;
-     end;
-
+  if (read_DB) then  ReadDB;
+  if (write_DB) then  WriteDB;
 end;
 
 procedure TFormAddToWarehouse.MySQLAfterDisconnect(Sender: TObject);
@@ -213,13 +197,13 @@ begin
   read_DB:= False;
 
   InIndeks:= '%' + FormAddToWarehouse.InputIndex.Text + '%';
-  InShortName:= '%'+ FormAddToWarehouse.InputShortName.Text +'%';
-  InFullName:= FormAddToWarehouse.InputFullName.Text;
+  InShortName:= AnsiToUTF8('%' + FormAddToWarehouse.InputShortName.Text + '%');
+  InFullName:= AnsiToUTF8('%' + FormAddToWarehouse.InputFullName.Text + '%');
 
   InNrZapotrzebowania:= FormAddToWarehouse.InputOrderNumber.Text;
   if InNrZapotrzebowania = '' then InNrZapotrzebowania:= '%';
 
-  InStatus:= '%' + FormAddToWarehouse.InputStatus.Text + '%';
+  InStatus:= AnsiToUTF8('%' + FormAddToWarehouse.InputStatus.Text + '%');
 
   SELECT:= 'SELECT ';
   SELECT:= SELECT + 'indeksy.nr, ';
@@ -232,17 +216,16 @@ begin
 
   WHERE:= 'WHERE ';
   WHERE:= WHERE + 'indeks LIKE "%s" ';
-  WHERE:= WHERE + 'AND nazwa_krotka LIKE "%s" ';
-  WHERE:= WHERE + 'AND nazwa_pelna LIKE "%s"';
+  WHERE:= WHERE + 'AND nazwa_krotka LIKE "%s";';
 
-  SQL.CommandText := Format(SELECT + FROM + WHERE, [InIndeks, InShortName, InFullName]);
+  SQL.CommandText := Format(SELECT + FROM + WHERE, [InIndeks, InShortName]);
 
   SQL.Open; // odczytaj dane
   RozmiarIndeksy:= SQL.RecordCount;
   setLength(Indeksy, RozmiarIndeksy);
   DB_status.Panels[3].Text:= 'Pobrano '+IntToStr(RozmiarIndeksy)+' indeksów.';
 
-  for i := 1 to SQL.RecordCount-1 do
+  for i := 0 to SQL.RecordCount-1 do
   begin
        Indeks.Numer:= SQL.FieldValues['nr'];
         Indeks.Indeks:= SQL.FieldValues['indeks'];
@@ -265,11 +248,11 @@ begin
   SELECT:= SELECT + 'nr_indeksu, ';
   SELECT:= SELECT + 'ilosc, ';
   SELECT:= SELECT + 'ilosc_dostarczona, ';
-  SELECT:= SELECT + 'status_pozycji_zapotrzebowania_materialowego ';
+  SELECT:= SELECT + 'status ';
 
   FROM:= 'FROM pozycje_zapotrzebowania_materialowego ';
   WHERE:= 'WHERE nr_zapotrzebowania_materialowego LIKE "%s" ';
-  WHERE:= WHERE + 'AND status_pozycji_zapotrzebowania_materialowego LIKE "%s"';
+  WHERE:= WHERE + 'AND status LIKE "%s"';
 
   SQL.CommandText := Format(SELECT + FROM + WHERE, [InNrZapotrzebowania, InStatus]);
 
@@ -278,14 +261,14 @@ begin
   setLength(PozycjeZapotrzebowaniaMaterialowego, RozmiarPozycjeZapotrzebowaniaMaterialowego);
   DB_status.Panels[4].Text:= 'Pobrano ' + IntToStr(RozmiarPozycjeZapotrzebowaniaMaterialowego) + ' pozycji zapotrzebowan zakupu.';
 
-  for j := 1 to SQL.RecordCount-1 do
+  for j := 0 to SQL.RecordCount-1 do
   begin
   { dodaj kolejne wartooci }
    PozycjaZapotrzebowaniaMaterialowego.Nr:= SQL.FieldValues['nr'];
     PozycjaZapotrzebowaniaMaterialowego.NrIndeksu:= SQL.FieldValues['nr_indeksu'];
      PozycjaZapotrzebowaniaMaterialowego.Ilosc:= SQL.FieldValues['ilosc'];
       PozycjaZapotrzebowaniaMaterialowego.IloscDostarczona:= SQL.FieldValues['ilosc_dostarczona'];
-       //PozycjaZapotrzebowaniaMaterialowego.Status:= UTF8ToAnsi(SQL.FieldValues['status_pozycji_zapotrzebowania_materialowego']);
+       PozycjaZapotrzebowaniaMaterialowego.Status:= SQL.FieldValues['status'];
 
     PozycjeZapotrzebowaniaMaterialowego[j]:= PozycjaZapotrzebowaniaMaterialowego;
      SQL.Next;
@@ -308,18 +291,16 @@ var
   ListItem : TListItem;
 begin
   ListView.Items.Clear;
-  for i:= 1 to RozmiarPozycjeZapotrzebowaniaMaterialowego do
+  for i:= 0 to RozmiarPozycjeZapotrzebowaniaMaterialowego-1 do
   begin
-   //PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[i];
-    for j:= 1 to RozmiarIndeksy do
+    for j:= 0 to RozmiarIndeksy-1 do
     begin
-      Indeks:= Indeksy[j];
-      if (PozycjeZapotrzebowaniaMaterialowego[i].NrIndeksu = Indeks.Numer) then
+      if (PozycjeZapotrzebowaniaMaterialowego[i].NrIndeksu = Indeksy[j].Numer) then
         begin
-          PozycjeZapotrzebowaniaMaterialowego[i].Indeks:= Indeks.Indeks;
-          PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka:= Indeks.NazwaKrotka;
-          PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna:= Indeks.NazwaPelna;
-          PozycjeZapotrzebowaniaMaterialowego[i].Jednostka:= Indeks.Jednostka;
+          PozycjeZapotrzebowaniaMaterialowego[i].Indeks:= Indeksy[j].Indeks;
+          PozycjeZapotrzebowaniaMaterialowego[i].NazwaKrotka:= Indeksy[j].NazwaKrotka;
+          PozycjeZapotrzebowaniaMaterialowego[i].NazwaPelna:= Indeksy[j].NazwaPelna;
+          PozycjeZapotrzebowaniaMaterialowego[i].Jednostka:= Indeksy[j].Jednostka;
 
           ListItem := ListView.Items.Add;
           ListItem.Caption:= (IntToStr(i));
@@ -329,8 +310,6 @@ begin
           ListItem.SubItems.Add(IntToStr(PozycjeZapotrzebowaniaMaterialowego[i].Ilosc));
           ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Jednostka);
           ListItem.SubItems.Add(PozycjeZapotrzebowaniaMaterialowego[i].Status);
-
-          //PozycjeZapotrzebowaniaMaterialowego[i] := PozycjaZapotrzebowaniaMaterialowego;
         end;
 
     end;
@@ -343,16 +322,15 @@ end;
 procedure TFormAddToWarehouse.ListViewDblClick(Sender: TObject);
 begin
  PozycjaZapotrzebowaniaMaterialowego:= PozycjeZapotrzebowaniaMaterialowego[StrToInt(ListView.Selected.Caption)];
-// ShowMessage(IntToSTr(PozycjaZapotrzebowaniaMaterialowego.Nr));
- OutputNrLiniiZapotrzebowania:= IntToSTr(PozycjaZapotrzebowaniaMaterialowego.Nr);
- OutputNumberIndex:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.NrIndeksu);
-  OutputIndex.Text:= PozycjaZapotrzebowaniaMaterialowego.Indeks;
-   OutputShortName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaKrotka;
-    OutputFullName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaPelna;
-     OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
-      OutputUnit.Text:= PozycjaZapotrzebowaniaMaterialowego.Jednostka;
-       OutputValue.Text:= '';
-        CheckOutputData;
+  OutputNrLiniiZapotrzebowania:= IntToSTr(PozycjaZapotrzebowaniaMaterialowego.Nr);
+   OutputNumberIndex:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.NrIndeksu);
+    OutputIndex.Text:= PozycjaZapotrzebowaniaMaterialowego.Indeks;
+     OutputShortName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaKrotka;
+      OutputFullName.Text:= PozycjaZapotrzebowaniaMaterialowego.NazwaPelna;
+       OutputQuantity.Text:= IntToStr(PozycjaZapotrzebowaniaMaterialowego.Ilosc);
+        OutputUnit.Text:= PozycjaZapotrzebowaniaMaterialowego.Jednostka;
+         OutputValue.Text:= '';
+          CheckOutputData;
 end;
 
 procedure TFormAddToWarehouse.InputOrderNumberKeyPress(Sender: TObject;
@@ -470,7 +448,7 @@ var
   IloscDosatarczona, DeliveryNote, Warehouse, UnitValue : String;
 
   _UPDATE, _SET, _WHERE: String;
-  _INSERT_INTO, _VALUES: String;
+  _INSERT_INTO, _VALUES, _STATUS: String;
 begin
   write_DB:= False;
   IloscDosatarczona:= FormAddToWarehouse.OutputQuantity.Text;
@@ -478,13 +456,14 @@ begin
   _SET:= 'SET `ilosc_dostarczona` =  %s, ';
   _SET:= _SET + '`status_pozycji_zapotrzebowania_materialowego` = %s ';
   _WHERE:= 'WHERE `pozycje_zapotrzebowania_materialowego`.`nr` = %s;';
+  _STATUS:= AnsiToUTF8('"Przyjête"');
 
-  SQL.CommandText := Format(_UPDATE + _SET + _WHERE, [IloscDosatarczona, '"Przyj"', OutputNrLiniiZapotrzebowania]);
+  SQL.CommandText := Format(_UPDATE + _SET + _WHERE, [IloscDosatarczona, _STATUS, OutputNrLiniiZapotrzebowania]);
 
   SQL.ExecSQL;
 
-  DeliveryNote:= FormAddToWarehouse.OutputDeliveryNote.Text;
-  Warehouse:= FormAddToWarehouse.OutputWarehouse.Text;
+  DeliveryNote:= AnsiToUTF8(FormAddToWarehouse.OutputDeliveryNote.Text);
+  Warehouse:= AnsiToUTF8(FormAddToWarehouse.OutputWarehouse.Text);
   UnitValue:= FormAddToWarehouse.OutputUnitValue.Text;
   UnitValue:= StringReplace(UnitValue, ',', '.', []);
 
@@ -492,7 +471,7 @@ begin
   _INSERT_INTO:= _INSERT_INTO + '`nr_pracownika_wydajacego`, `nr_pracownika_pobierajacego`, `nr_indeksu_materialowego`, `nr_magazynu`, `nr_regalu`, `nr_polki`, `ilosc`, `wartosc_jednostkowa`) ';
   _VALUES:= 'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s");';
 
-  SQL.CommandText := Format(_INSERT_INTO + _VALUES, [OutputNrLiniiZapotrzebowania, DeliveryNote, Warehouse,'52','0', OutputNumberIndex,'IV','0','0', IloscDosatarczona, UnitValue]);
+  SQL.CommandText := Format(_INSERT_INTO + _VALUES, [OutputNrLiniiZapotrzebowania, DeliveryNote, '0','52','0', OutputNumberIndex, Warehouse, '0','0', IloscDosatarczona, UnitValue]);
 
   SQL.ExecSQL;
 
@@ -503,11 +482,11 @@ end;
 
 procedure TFormAddToWarehouse.btnConfirmDeliveryClick(Sender: TObject);
 begin
-  if Connected then Connected := False else Connected := True;
+//  if Connected then Connected := False else Connected := True;
+  FormAddToWarehouse.btnConfirmDelivery.Enabled:= False;
   write_DB:= True;
   MySQL.Connected := True;
-  FormAddToWarehouse.btnConfirmDelivery.Enabled:= False;
-  end;
+end;
 
 procedure TFormAddToWarehouse.OutputQuantityKeyPress(Sender: TObject;
   var Key: Char);

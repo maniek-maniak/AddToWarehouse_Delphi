@@ -278,6 +278,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
       Height = 21
       Color = 12580802
       TabOrder = 3
+      OnKeyPress = OutputQuantityKeyPress
       OnKeyUp = OutputQuantityKeyUp
     end
     object OutputUnitValue: TEdit
@@ -319,7 +320,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     end
     object btnConfirmDelivery: TButton
       Left = 8
-      Top = 312
+      Top = 320
       Width = 329
       Height = 33
       Caption = 'Przyjmij'
@@ -435,7 +436,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     Params.Strings = (
       'DriverName=MySQL'
       'HostName=localhost'
-      'Database=magazyn'
+      'Database=magazyny'
       'User_Name=root'
       'Password='
       'BlobSize=-1'
@@ -445,20 +446,20 @@ object FormAddToWarehouse: TFormAddToWarehouse
     AfterConnect = MySQLAfterConnect
     AfterDisconnect = MySQLAfterDisconnect
     Left = 408
-    Top = 48
+    Top = 32
   end
   object SQL: TSQLDataSet
     MaxBlobSize = -1
     Params = <>
     SQLConnection = MySQL
     Left = 440
-    Top = 48
+    Top = 32
   end
   object TReadDB: TTimer
     Enabled = False
     Interval = 1
     OnTimer = TReadDBTimer
     Left = 376
-    Top = 48
+    Top = 32
   end
 end
