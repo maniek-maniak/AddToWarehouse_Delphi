@@ -1,6 +1,6 @@
 object FormAddToWarehouse: TFormAddToWarehouse
-  Left = 29
-  Top = 118
+  Left = 315
+  Top = 110
   BorderIcons = [biMinimize]
   BorderStyle = bsDialog
   Caption = 
@@ -16,6 +16,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
   Font.Height = -11
   Font.Name = 'MS Sans Serif'
   Font.Style = []
+  Menu = MainMenu1
   OldCreateOrder = False
   Position = poDesktopCenter
   OnClose = FormClose
@@ -320,7 +321,7 @@ object FormAddToWarehouse: TFormAddToWarehouse
     end
     object btnConfirmDelivery: TButton
       Left = 8
-      Top = 320
+      Top = 312
       Width = 329
       Height = 33
       Caption = 'Przyjmij'
@@ -461,5 +462,19 @@ object FormAddToWarehouse: TFormAddToWarehouse
     OnTimer = TReadDBTimer
     Left = 376
     Top = 32
+  end
+  object MainMenu1: TMainMenu
+    Left = 520
+    Top = 168
+    object Dostawy1: TMenuItem
+      Caption = 'Dostawy'
+    end
+    object Rozchody1: TMenuItem
+      Caption = 'Rozchody'
+      object Wydajnazlecenie1: TMenuItem
+        Caption = 'Wydaj na zlecenie'
+        OnClick = Wydajnazlecenie1Click
+      end
+    end
   end
 end

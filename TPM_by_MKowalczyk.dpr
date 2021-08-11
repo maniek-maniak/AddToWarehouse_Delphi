@@ -1,4 +1,4 @@
-program ProjectAddToWarehouse;
+program TPM_by_MKowalczyk;
 
 uses
   Forms,
@@ -11,7 +11,8 @@ uses
 
 begin
   Application.Initialize;
-  Application.CreateForm(TFormAddToWarehouse, FormAddToWarehouse);
   Application.CreateForm(TFormLogIn, FormLogIn);
+  Application.CreateForm(TFormAddToWarehouse, FormAddToWarehouse);
+  Application.CreateForm(TFormSpendOnTheJob, FormSpendOnTheJob);
   Application.Run;
 end.

@@ -4,7 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls, ExtCtrls;
+  Dialogs, DBXpress, FMTBcd, DB, SqlExpr, StdCtrls, ComCtrls, ExtCtrls,
+  Menus, UnitSpendOnTheJob;
 
 type
   TFormAddToWarehouse = class(TForm)
@@ -53,6 +54,10 @@ type
     MySQL: TSQLConnection;
     SQL: TSQLDataSet;
     TReadDB: TTimer;
+    MainMenu1: TMainMenu;
+    Dostawy1: TMenuItem;
+    Rozchody1: TMenuItem;
+    Wydajnazlecenie1: TMenuItem;
     procedure btnConnectClick(Sender: TObject);
     procedure MySQLAfterConnect(Sender: TObject);
     procedure MySQLAfterDisconnect(Sender: TObject);
@@ -75,6 +80,7 @@ type
       Shift: TShiftState);
     procedure btnConfirmDeliveryClick(Sender: TObject);
     procedure OutputQuantityKeyPress(Sender: TObject; var Key: Char);
+    procedure Wydajnazlecenie1Click(Sender: TObject);
   private
     { Private declarations }
     Connected : Boolean;
@@ -443,22 +449,21 @@ end;
 
 procedure TFormAddToWarehouse.WriteDB;
 var
-  i, j: Integer;
 
-  IloscDosatarczona, DeliveryNote, Warehouse, UnitValue : String;
+  IloscDostarczona, DeliveryNote, Warehouse, UnitValue : String;
 
   _UPDATE, _SET, _WHERE: String;
   _INSERT_INTO, _VALUES, _STATUS: String;
 begin
   write_DB:= False;
-  IloscDosatarczona:= FormAddToWarehouse.OutputQuantity.Text;
+  IloscDostarczona:= FormAddToWarehouse.OutputQuantity.Text;
   _UPDATE:= 'UPDATE `pozycje_zapotrzebowania_materialowego` ';
   _SET:= 'SET `ilosc_dostarczona` =  %s, ';
   _SET:= _SET + '`status_pozycji_zapotrzebowania_materialowego` = %s ';
   _WHERE:= 'WHERE `pozycje_zapotrzebowania_materialowego`.`nr` = %s;';
   _STATUS:= AnsiToUTF8('"Przyjête"');
 
-  SQL.CommandText := Format(_UPDATE + _SET + _WHERE, [IloscDosatarczona, _STATUS, OutputNrLiniiZapotrzebowania]);
+  SQL.CommandText := Format(_UPDATE + _SET + _WHERE, [IloscDostarczona, _STATUS, OutputNrLiniiZapotrzebowania]);
 
   SQL.ExecSQL;
 
@@ -471,7 +476,7 @@ begin
   _INSERT_INTO:= _INSERT_INTO + '`nr_pracownika_wydajacego`, `nr_pracownika_pobierajacego`, `nr_indeksu_materialowego`, `nr_magazynu`, `nr_regalu`, `nr_polki`, `ilosc`, `wartosc_jednostkowa`) ';
   _VALUES:= 'VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s", "%s");';
 
-  SQL.CommandText := Format(_INSERT_INTO + _VALUES, [OutputNrLiniiZapotrzebowania, DeliveryNote, '0','52','0', OutputNumberIndex, Warehouse, '0','0', IloscDosatarczona, UnitValue]);
+  SQL.CommandText := Format(_INSERT_INTO + _VALUES, [OutputNrLiniiZapotrzebowania, DeliveryNote, '0','52','0', OutputNumberIndex, Warehouse, '0','0', IloscDostarczona, UnitValue]);
 
   SQL.ExecSQL;
 
@@ -500,6 +505,12 @@ begin
   begin
     Key := #0;
   end;
+end;
+
+procedure TFormAddToWarehouse.Wydajnazlecenie1Click(Sender: TObject);
+begin
+  FormAddToWarehouse.Visible:= false;
+  FormSpendOnTheJob.Visible:= true;
 end;
 
 end.

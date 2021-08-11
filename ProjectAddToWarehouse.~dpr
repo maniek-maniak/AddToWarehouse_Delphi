@@ -2,12 +2,14 @@ program ProjectAddToWarehouse;
 
 uses
   Forms,
-  UnitAddToWarehouse in 'UnitAddToWarehouse.pas' {Form1};
+  UnitAddToWarehouse in 'UnitAddToWarehouse.pas' {Form1},
+  UnitLogin in 'UnitLogin.pas' {FormLogIn};
 
 {$R *.res}
 
 begin
   Application.Initialize;
   Application.CreateForm(TFormAddToWarehouse, FormAddToWarehouse);
+  Application.CreateForm(TFormLogIn, FormLogIn);
   Application.Run;
 end.

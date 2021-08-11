@@ -15,6 +15,7 @@ object FormSpendOnTheJob: TFormSpendOnTheJob
   Font.Style = []
   Menu = MainMenu1
   OldCreateOrder = False
+  Visible = True
   PixelsPerInch = 96
   TextHeight = 13
   object GroupBox1: TGroupBox
